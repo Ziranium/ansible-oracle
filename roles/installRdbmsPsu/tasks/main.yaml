@@ -1,0 +1,31 @@
+---
+
+- name: update Opatch
+  unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ oracle_home }} remote_src=yes
+  become: true
+  become_user: oracle
+
+- name: chmod generatePsuRdbmsRespFile.sh
+  file: path={{ patch_dir }}/generatePsuRdbmsRespFile.sh owner=oracle group=oinstall mode=0755
+
+- name: generate response file
+  shell: |
+    source /home/oracle/.bash_profile
+    {{ patch_dir }}/generatePsuRdbmsRespFile.sh {{ oracle_home }} {{ patch_dir }}
+  become: true
+  become_user: oracle
+
+- name: patch conflict detection
+  shell: "export ORACLE_HOME={{ oracle_home }}; cd {{ patch_dir }}/{{ psu_number }}; $ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./"
+  become: true
+  become_user: oracle
+  register: conflict_detection
+  failed_when: "'Prereq \"checkConflictAgainstOHWithDetail\" passed.' not in conflict_detection.stdout"
+
+- name: apply psu
+  shell: "export ORACLE_HOME={{ oracle_home}}; cd {{ patch_dir }}/{{ psu_number }}; $ORACLE_HOME/OPatch/opatch apply -silent -ocmrf {{ patch_dir }}/rdbmspsu.rsp"
+  become: true
+  become_user: oracle
+  register: apply_psu
+  failed_when: "'Composite patch {{ psu_number }} successfully applied.' not in apply_psu.stdout"
+

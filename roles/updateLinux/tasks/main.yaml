@@ -1,0 +1,30 @@
+---
+
+- name: install python-simplejson
+  yum: name=python-simplejson state=latest disablerepo=puppetlabs-pc1
+  environment:
+       http_proxy: "{{ proxy }}"
+
+- name: upgrade all packages
+  yum: name=* state=latest disablerepo=puppetlabs-pc1
+  environment:
+     http_proxy: "{{ proxy }}"
+
+- name: install new packages
+  yum: name=compat-libcap1,compat-libstdc++-33,cpp,gcc,gcc-c++,glibc-devel,glibc-headers,kernel-headers,libXmu,libXt,ksh,libXxf86misc,libXxf86vm,libaio-devel,libdmx,libstdc++-devel,mpfr,make,xorg-x11-utils,xorg-x11-xauth,libXv,libXxf86dga,rsync,unzip state=latest
+  environment:
+     http_proxy: "{{ proxy }}"
+
+- name: install 'X Window System' package group
+  yum: name="@X Window System" state=present
+  environment:
+     http_proxy: "{{ proxy }}"
+
+- name: install python-selinux
+  yum: name=libselinux-python state=installed
+  environment:
+      http_proxy: "{{ proxy }}"
+
+- name: add public key to authorized_key file of root
+  authorized_key: user=root state=present key="{{ lookup('file','/root/.ssh/id_rsa.pub') }}"
+

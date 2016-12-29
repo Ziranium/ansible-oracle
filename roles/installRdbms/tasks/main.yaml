@@ -1,0 +1,15 @@
+---
+
+- name: create rdbms responsefile
+  template: src=rdbms.rsp.tpl dest={{ patch_dir }}/rdbms.rsp owner=oracle group=oinstall mode=0755
+
+- name: install rdbms only
+  shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms.rsp"
+  become: true
+  become_user: oracle
+
+- name: execute orainstRoot.sh
+  shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"
+
+- name: execute orainstRoot.sh
+  shell: "{{ oracle_home }}/root.sh"

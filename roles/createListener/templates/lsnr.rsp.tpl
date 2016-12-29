@@ -1,0 +1,16 @@
+[GENERAL]
+RESPONSEFILE_VERSION="12.1"
+CREATE_TYPE="CUSTOM"
+SHOW_GUI=false
+[oracle.net.ca]
+INSTALLED_COMPONENTS={"server","net8","javavm"}
+INSTALL_TYPE=""typical""
+LISTENER_NUMBER=1
+LISTENER_NAMES={"{{ netca_lsnr_name }}"}
+LISTENER_PROTOCOLS={"TCP;{{ netca_lsnr_port }}"}
+LISTENER_START=""{{ netca_lsnr_name }}""
+NAMING_METHODS={"TNSNAMES","ONAMES","HOSTNAME"}
+NSN_NUMBER=1
+NSN_NAMES={"EXTPROC_CONNECTION_DATA"}
+NSN_SERVICE={"PLSExtProc"}
+NSN_PROTOCOLS={"TCP;HOSTNAME;{{ netca_lsnr_port }}"}

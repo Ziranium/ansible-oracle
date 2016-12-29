@@ -1,0 +1,20 @@
+---
+
+- name: create netca responsefile
+  template: src=lsnr.rsp.tpl dest={{ patch_dir }}/lsnr.rsp owner=oracle group=oinstall mode=0755
+
+- name: create listener
+  shell: "{{ oracle_home }}/bin/netca -silent -responseFile {{ patch_dir }}/lsnr.rsp"
+  become: true
+  become_user: oracle
+
+- name: configure adrci lsnr
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ dbca_dbname }}
+    echo "set home diag/tnslsnr/{{ ansible_hostname |lower }}/{{ netca_lsnr_name |lower }}
+    set control (SHORTP_POLICY=168)
+    set control (LONGP_POLICY=168)" | {{ oracle_home }}/bin/adrci
+  become: true
+  become_user: oracle
+

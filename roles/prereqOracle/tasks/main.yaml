@@ -1,0 +1,135 @@
+---
+
+- name: check u01 free disk space
+  shell: df -P /u01 | awk 'END { print $4 }'
+  register: u01size
+  failed_when: u01size.stdout|int < {{ u01_size_gb }} * 1024 * 1024
+
+- name: check tmp free disk space
+  shell: df -P /tmp | awk 'END { print $4 }'
+  register: tmpsize
+  failed_when: tmpsize.stdout|int < {{ tmp_size_gb }} * 1024 * 1024
+
+- name: create group dba
+  group: name=dba state=present
+
+- name: create group oinstall
+  group: name=oinstall state=present
+
+- name: create user oracle
+  user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba
+
+- name: create directory for installation files
+  file: dest={{ patch_dir }} state=directory owner=oracle group=oinstall
+
+- name: create directory for rdbms installation
+  file: dest={{ oracle_root }} state=directory owner=oracle group=oinstall
+
+- name: copy installer
+  synchronize:
+    src=files/
+    dest={{ patch_dir }}
+    mode=push
+
+- name: change binaries owner
+  file: path={{ item }} owner=oracle group=oinstall
+  with_items:
+    - "{{ patch_dir }}"
+    - "{{ patch_dir }}/{{ rdbms_zip_part1 }}"
+    - "{{ patch_dir }}/{{ rdbms_zip_part2 }}"
+    - "{{ patch_dir }}/{{ rdbms_psu }}"
+
+- name: set hostname in response file
+  lineinfile: dest={{ patch_dir }}/db_install.rsp line="ORACLE_HOSTNAME={{ ansible_hostname }}" state=present
+
+- name: set inventory_location in response file
+  lineinfile: dest={{ patch_dir }}/db_install.rsp line="INVENTORY_LOCATION={{ oracle_root }}/oraInventory" state=present
+
+- name: set oracle_base in response file
+  lineinfile: dest={{ patch_dir }}/db_install.rsp line="ORACLE_BASE={{ oracle_base }}" state=present
+
+- name: set oracle_home in response file
+  lineinfile: dest={{ patch_dir }}/db_install.rsp line="ORACLE_HOME={{ oracle_home }}" state=present
+
+- name: unzip RDBMS installer (1/2)
+  unarchive: src={{ patch_dir }}/{{ rdbms_zip_part1 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+
+- name: unzip RDBMS installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ rdbms_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+
+- name: unzip RDBMS psu
+  unarchive: src={{ patch_dir }}/{{ rdbms_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+
+- name: get memory total
+  shell: grep MemTotal /proc/meminfo | awk 'END { print $2 }'
+  register: memTotal
+
+- name: get gid oinstall
+  shell: "getent group oinstall | cut -d: -f3"
+  register: oinstallGid
+
+- name: set sysctl parameters
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.val }}"
+    state: present
+  with_items:
+  - { name: 'fs.file-max', val: '6815744' }
+  - { name: 'kernel.sem', val: '250 32000 100 128' }
+  - { name: 'kernel.shmmni', val: '4096' }
+  - { name: 'kernel.shmall', val: '1073741824' }
+  - { name: 'kernel.shmmax', val: '4398046511104' }
+  - { name: 'net.core.rmem_default', val: '262144' }
+  - { name: 'net.core.rmem_max', val: '4194304' }
+  - { name: 'net.core.wmem_default', val: '262144' }
+  - { name: 'net.core.wmem_max', val: '1048576' }
+  - { name: 'fs.aio-max-nr', val: '1048576' }
+  - { name: 'net.ipv4.ip_local_port_range', val: '9000 65500' }
+  - { name: 'vm.nr_hugepages', val: "{{ (memTotal.stdout|int*0.8/2048)|int }}" }
+  - { name: 'vm.hugetlb_shm_group', val: "{{ oinstallGid.stdout }}" }
+
+- name: set limits parameters
+  pam_limits: 
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.type }}"
+    limit_item: "{{ item.item }}"
+    value: "{{ item.val }}"
+    use_max: yes
+  with_items:
+  - { domain: 'oracle', type: 'soft', item: 'nproc', val: '16384' }
+  - { domain: 'oracle', type: 'hard', item: 'nproc', val: '16384' }
+  - { domain: 'oracle', type: 'soft', item: 'nofile', val: '1024' }
+  - { domain: 'oracle', type: 'hard', item: 'nofile', val: '65536' }
+  - { domain: 'oracle', type: 'soft', item: 'stack', val: '10240' }
+  - { domain: 'oracle', type: 'hard', item: 'stack', val: '32768' }
+  - { domain: 'oracle', type: 'hard', item: 'memlock', val: "{{ (memTotal.stdout|int*0.95)|int }}" }
+  - { domain: 'oracle', type: 'soft', item: 'memlock', val: "{{ (memTotal.stdout|int*0.95)|int }}" }
+
+- name: update bash_profile user oracle
+  blockinfile:
+    dest: /home/oracle/.bash_profile
+    block: |
+      export ORACLE_BASE={{ oracle_base }}
+      export ORACLE_HOME={{ oracle_home }}
+      export PATH=/usr/sbin:$PATH
+      export PATH=$ORACLE_HOME/bin:$PATH
+      export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+      export CLASSPATH=$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+    marker: "# {mark} Oracle Environnement"
+
+- name: restart machine
+  shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+  async: 1
+  poll: 0
+  ignore_errors: true
+
+- name: waiting for server to come back
+  local_action: wait_for host={{ inventory_hostname }} state=started delay=30 timeout=30
+
+

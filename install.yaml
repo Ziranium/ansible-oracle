@@ -1,0 +1,47 @@
+---
+- hosts: testjla
+  vars:
+    # GLOBAL
+    patch_dir: /u01/install
+    proxy: http://monproxy:8080/
+    # RDBMS
+    oracle_root: /u01/app
+    oracle_base: /u01/app/oracle
+    oracle_home: /u01/app/oracle/product/12.1.0.2/dbhome_1
+    u01_size_gb: 10
+    tmp_size_gb: 1.5
+    rdbms_zip_part1: linuxamd64_12102_database_se2_1of2.zip
+    rdbms_zip_part2: linuxamd64_12102_database_se2_2of2.zip
+    # RDBMS PSU
+    opatch_patch: p6880880_121010_Linux-x86-64.zip
+    rdbms_psu: p24006101_121020_Linux-x86-64.zip
+    psu_number: 24006101
+    # LISTENER
+    netca_lsnr_name: LISTENER
+    netca_lsnr_port: 1521
+    # DATABASE
+    dbca_gdbname: TESTJLA
+    dbca_dbname: TESTJLA
+    dbca_pwdsys: Password1
+    dbca_pwdsystem: Password1
+    dbca_charset: WE8ISO8859P15
+    dbca_ncharset: UTF8
+    dbca_initparam_sgamax_mb: 2048
+    dbca_initparam_sga_mb: 2048
+    dbca_initparam_pga_mb: 100
+    dbca_initparam_dbrecoverydest: /u01/app/oracle/fra/
+    dbca_initparam_dbrecoverydestsize: 1024
+    dbca_initparam_oradata: /u01/app/oracle/oradata/
+    dbca_initparam_redologdest1: /u01/app/oracle/fra/
+    dbca_initparam_redologdest2: /u01/app/oracle/oradata/
+
+  roles:
+#    - updateLinux
+#    - prereqOracle
+#    - installRdbms
+#    - installRdbmsPsu
+#    - createListener
+    - createDatabase
+
+
+
