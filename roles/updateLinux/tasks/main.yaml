@@ -1,12 +1,12 @@
 ---
 
 - name: install python-simplejson
-  yum: name=python-simplejson state=latest disablerepo=puppetlabs-pc1
+  yum: name=python-simplejson state=latest 
   environment:
        http_proxy: "{{ proxy }}"
 
 - name: upgrade all packages
-  yum: name=* state=latest disablerepo=puppetlabs-pc1
+  yum: name=* state=latest
   environment:
      http_proxy: "{{ proxy }}"
 
@@ -27,4 +27,5 @@
 
 - name: add public key to authorized_key file of root
   authorized_key: user=root state=present key="{{ lookup('file','/root/.ssh/id_rsa.pub') }}"
+
 

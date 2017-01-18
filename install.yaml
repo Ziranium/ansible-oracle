@@ -3,19 +3,31 @@
   vars:
     # GLOBAL
     patch_dir: /u01/install
-    proxy: http://monproxy:8080/
+    proxy: http://proxy.svc.sigma.host:8080
+    opatch_patch: p6880880_121010_Linux-x86-64.zip
+    u01_size_gb: 10
+    tmp_size_gb: 1.5
+    # GRID
+    grid_base: /u01/app/grid
+    grid_home: /u01/app/grid/product/12.1.0.2/dbhome_1
+    grid_zip_part1: linuxamd64_12102_grid_1of2.zip
+    grid_zip_part2: linuxamd64_12102_grid_2of2.zip
+    grid_asmdisk: [ { dev: '/dev/sdc1', asm: 'ASM_DATA_01' }, { dev: '/dev/sdd1', asm: 'ASM_DATA_02' } ]
+    grid_disklist: "" # LAISSER VIDE
+    grid_asmlib: oracleasmlib-2.0.12-1.el7.x86_64.rpm
+    grid_asmsupport: oracleasm-support-2.1.8-3.el7.x86_64.rpm
+    # GRID PSU
+    grid_psu: p24412235_121020_Linux-x86-64.zip
+    grid_psu_number: 24412235
     # RDBMS
     oracle_root: /u01/app
     oracle_base: /u01/app/oracle
     oracle_home: /u01/app/oracle/product/12.1.0.2/dbhome_1
-    u01_size_gb: 10
-    tmp_size_gb: 1.5
     rdbms_zip_part1: linuxamd64_12102_database_se2_1of2.zip
     rdbms_zip_part2: linuxamd64_12102_database_se2_2of2.zip
     # RDBMS PSU
-    opatch_patch: p6880880_121010_Linux-x86-64.zip
     rdbms_psu: p24006101_121020_Linux-x86-64.zip
-    psu_number: 24006101
+    rdbms_psu_number: 24006101
     # LISTENER
     netca_lsnr_name: LISTENER
     netca_lsnr_port: 1521
@@ -38,10 +50,11 @@
   roles:
 #    - updateLinux
 #    - prereqOracle
+    - installGrid
 #    - installRdbms
 #    - installRdbmsPsu
 #    - createListener
-    - createDatabase
+#    - createDatabase
 
 
 

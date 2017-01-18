@@ -1,7 +1,7 @@
 ---
 
 - name: update Opatch
-  unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ oracle_home }} remote_src=yes
+  unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ oracle_home }} remote_src=yes exclude=PatchSearch.xml
   become: true
   become_user: oracle
 
@@ -16,16 +16,16 @@
   become_user: oracle
 
 - name: patch conflict detection
-  shell: "export ORACLE_HOME={{ oracle_home }}; cd {{ patch_dir }}/{{ psu_number }}; $ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./"
+  shell: "export ORACLE_HOME={{ oracle_home }}; cd {{ patch_dir }}/{{ rdbms_psu_number }}; $ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./"
   become: true
   become_user: oracle
   register: conflict_detection
   failed_when: "'Prereq \"checkConflictAgainstOHWithDetail\" passed.' not in conflict_detection.stdout"
 
 - name: apply psu
-  shell: "export ORACLE_HOME={{ oracle_home}}; cd {{ patch_dir }}/{{ psu_number }}; $ORACLE_HOME/OPatch/opatch apply -silent -ocmrf {{ patch_dir }}/rdbmspsu.rsp"
+  shell: "export ORACLE_HOME={{ oracle_home}}; cd {{ patch_dir }}/{{ rdbms_psu_number }}; $ORACLE_HOME/OPatch/opatch apply -silent -ocmrf {{ patch_dir }}/rdbmspsu.rsp"
   become: true
   become_user: oracle
   register: apply_psu
-  failed_when: "'Composite patch {{ psu_number }} successfully applied.' not in apply_psu.stdout"
+  failed_when: "'Composite patch {{ rdbms_psu_number }} successfully applied.' not in apply_psu.stdout"
 

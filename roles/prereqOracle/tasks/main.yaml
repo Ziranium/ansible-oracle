@@ -19,6 +19,9 @@
 - name: create user oracle
   user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba
 
+- name: create user grid
+  user: name=grid comment="Oracle GRID user" group=oinstall groups=oinstall,dba
+
 - name: create directory for installation files
   file: dest={{ patch_dir }} state=directory owner=oracle group=oinstall
 
@@ -31,25 +34,26 @@
     dest={{ patch_dir }}
     mode=push
 
-- name: change binaries owner
+- name: chmod oracle root
+  file: path={{ oracle_root }} owner=oracle group=oinstall mode=0775 state=directory
+
+- name: chmod install directory
+  file: path={{ patch_dir }} owner=oracle group=oinstall mode=0775 state=directory
+
+- name: change binaries owner to oracle
   file: path={{ item }} owner=oracle group=oinstall
   with_items:
-    - "{{ patch_dir }}"
     - "{{ patch_dir }}/{{ rdbms_zip_part1 }}"
     - "{{ patch_dir }}/{{ rdbms_zip_part2 }}"
     - "{{ patch_dir }}/{{ rdbms_psu }}"
 
-- name: set hostname in response file
-  lineinfile: dest={{ patch_dir }}/db_install.rsp line="ORACLE_HOSTNAME={{ ansible_hostname }}" state=present
+- name: change binaries owner to grid
+  file: path={{ item }} owner=grid group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ grid_zip_part1 }}"
+    - "{{ patch_dir }}/{{ grid_zip_part2 }}"
+    - "{{ patch_dir }}/{{ grid_psu }}"
 
-- name: set inventory_location in response file
-  lineinfile: dest={{ patch_dir }}/db_install.rsp line="INVENTORY_LOCATION={{ oracle_root }}/oraInventory" state=present
-
-- name: set oracle_base in response file
-  lineinfile: dest={{ patch_dir }}/db_install.rsp line="ORACLE_BASE={{ oracle_base }}" state=present
-
-- name: set oracle_home in response file
-  lineinfile: dest={{ patch_dir }}/db_install.rsp line="ORACLE_HOME={{ oracle_home }}" state=present
 
 - name: unzip RDBMS installer (1/2)
   unarchive: src={{ patch_dir }}/{{ rdbms_zip_part1 }} dest={{ patch_dir }} remote_src=yes
@@ -65,6 +69,21 @@
   unarchive: src={{ patch_dir }}/{{ rdbms_psu }} dest={{ patch_dir }} remote_src=yes
   become: true
   become_user: oracle
+
+- name: unzip GRID installer (1/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: unzip GRID installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: unzip GRID psu
+  unarchive: src={{ patch_dir }}/{{ grid_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
 
 - name: get memory total
   shell: grep MemTotal /proc/meminfo | awk 'END { print $2 }'
@@ -96,20 +115,14 @@
 
 - name: set limits parameters
   pam_limits: 
-    domain: "{{ item.domain }}"
-    limit_type: "{{ item.type }}"
-    limit_item: "{{ item.item }}"
-    value: "{{ item.val }}"
+    domain: "{{ item[1] }}"
+    limit_type: "{{ item[0].type }}"
+    limit_item: "{{ item[0].item }}"
+    value: "{{ item[0].val }}"
     use_max: yes
-  with_items:
-  - { domain: 'oracle', type: 'soft', item: 'nproc', val: '16384' }
-  - { domain: 'oracle', type: 'hard', item: 'nproc', val: '16384' }
-  - { domain: 'oracle', type: 'soft', item: 'nofile', val: '1024' }
-  - { domain: 'oracle', type: 'hard', item: 'nofile', val: '65536' }
-  - { domain: 'oracle', type: 'soft', item: 'stack', val: '10240' }
-  - { domain: 'oracle', type: 'hard', item: 'stack', val: '32768' }
-  - { domain: 'oracle', type: 'hard', item: 'memlock', val: "{{ (memTotal.stdout|int*0.95)|int }}" }
-  - { domain: 'oracle', type: 'soft', item: 'memlock', val: "{{ (memTotal.stdout|int*0.95)|int }}" }
+  with_nested:
+    - [ { type: 'soft', item: 'nproc', val: '16384' }, { type: 'hard', item: 'nproc', val: '16384' }, { type: 'soft', item: 'nofile', val: '1024' }, { type: 'hard', item: 'nofile', val: '65536' }, { type: 'soft', item: 'stack', val: '10240' }, { type: 'hard', item: 'stack', val: '32768' }, { type: 'hard', item: 'memlock', val: "{{ (memTotal.stdout|int*0.95)|int }}" }, { type: 'soft', item: 'memlock', val: "{{ (memTotal.stdout|int*0.95)|int }}" } ]
+    - [ 'oracle', 'grid']
 
 - name: update bash_profile user oracle
   blockinfile:
@@ -121,7 +134,35 @@
       export PATH=$ORACLE_HOME/bin:$PATH
       export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
       export CLASSPATH=$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+      umask 022
     marker: "# {mark} Oracle Environnement"
+
+- name: update bash_profile user grid
+  blockinfile:
+    dest: /home/grid/.bash_profile
+    block: |
+      export ORACLE_SID=+ASM
+      export JAVA_HOME=/usr/local/java
+      export ORACLE_BASE={{ grid_base }}
+      export ORACLE_HOME={{ grid_home }}
+      export NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+      export TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+      export PATH=${JAVA_HOME}/bin:${PATH}:$HOME/bin:$ORACLE_HOME/bin:/usr/bin:/bin:/usr/bin/X11:/usr/local/bin:/u01/app/common/oracle/bin
+      export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$ORACLE_HOME/oracm/lib:/lib:/usr/lib:/usr/local/lib
+      export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib:$ORACLE_HOME/network/jlib
+      umask 022
+    marker: "# {mark} Grid Environnement"
+
+- name: set ntpd options
+  lineinfile:
+    dest: /etc/sysconfig/ntpd
+    regexp: '^OPTIONS='
+    line: 'OPTIONS="-g -x -p /var/run/ntpd.pid"'
+
+- name: restart ntpd
+  service:
+    name: ntpd
+    state: restarted
 
 - name: restart machine
   shell: sleep 2 && shutdown -r now "Ansible updates triggered"
