@@ -43,18 +43,19 @@
     dbca_initparam_pga_mb: 100
     dbca_initparam_dbrecoverydest: /u01/app/oracle/fra/
     dbca_initparam_dbrecoverydestsize: 1024
-    dbca_initparam_oradata: /u01/app/oracle/oradata/
+    #dbca_initparam_oradata: /u01/app/oracle/oradata/
+    dbca_initparam_oradata: +DG_DATA
     dbca_initparam_redologdest1: /u01/app/oracle/fra/
     dbca_initparam_redologdest2: /u01/app/oracle/oradata/
 
   roles:
-#    - updateLinux
-#    - prereqOracle
+    - updateLinux
+    - prereqOracle
     - installGrid
-#    - installRdbms
-#    - installRdbmsPsu
-#    - createListener
-#    - createDatabase
+    - installRdbms
+    - installRdbmsPsu
+    - createListener
+    - createDatabase
 
 
 
