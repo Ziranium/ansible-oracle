@@ -4,9 +4,11 @@
   template: src=rdbms.rsp.tpl dest={{ patch_dir }}/rdbms.rsp owner=oracle group=oinstall mode=0755
 
 - name: install rdbms only
-  shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms.rsp"
+  shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms.rsp" 
   become: true
   become_user: oracle
+  register: rdbms_install
+  failed_when: "'Successfully Setup Software' not in rdbms_install.stdout"
 
 - name: execute orainstRoot.sh
   shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"

@@ -16,6 +16,6 @@ oracle.install.crs.config.autoConfigureClusterNodeVIP=false
 oracle.install.asm.diskGroup.name=DG_DATA
 oracle.install.asm.diskGroup.redundancy=EXTERNAL
 oracle.install.asm.diskGroup.disks={{ grid_disklist[:-1] }}
-oracle.install.asm.diskGroup.diskDiscoveryString=/dev/oracleasm/disks/
+oracle.install.asm.diskGroup.diskDiscoveryString=ORCL:*
 
 

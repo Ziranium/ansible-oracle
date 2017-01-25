@@ -7,10 +7,12 @@
   file: path={{ item }} owner=oracle group=oinstall state=directory
   with_items:
     - "{{ dbca_initparam_dbrecoverydest }}"
-    - "{{ dbca_initparam_oradata }}"
     - "{{ dbca_initparam_redologdest1 }}"
     - "{{ dbca_initparam_redologdest2 }}"
     - "{{ oracle_base }}/fast_recovery_area/{{ dbca_dbname }}"
+    - "{{ oracle_base }}/oradata/{{ dbca_dbname }}"
+    - "{{ dbca_initparam_oradata }}"
+  when: "'/' in '{{ item }}'"
 
 - name: create database
   shell: "{{ oracle_home }}/bin/dbca -silent -responseFile {{ patch_dir }}/dbca.rsp"
