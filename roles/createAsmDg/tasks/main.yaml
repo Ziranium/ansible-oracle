@@ -1,0 +1,21 @@
+---
+
+- name: concat disk
+  set_fact:
+    asmdg_disklist: "{{ asmdg_disklist + 'ORCL:' + item.asm + ',' }}"
+  with_items:
+     "{{ asmdg_asmdisk }}"
+
+- name: create ASM disks
+  shell: "/usr/sbin/oracleasm createdisk {{ item.asm }} {{ item.dev }}"
+  with_items:
+    "{{ asmdg_asmdisk }}"
+
+- name: create asm instance
+  shell: "{{ grid_home }}/bin/asmca -silent -createDiskGroup -sysAsmPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ asmdg_dgname }} -diskList '{{ asmdg_disklist[:-1] }}' -redundancy EXTERNAL"
+  become: true
+  become_user: grid
+  register: asmca
+  failed_when: "'ERROR' in asmca.stdout"
+
+

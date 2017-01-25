@@ -1,0 +1,44 @@
+---
+
+- name: set grid home permissions
+  file: path={{ grid_home}} owner=grid group=oinstall
+
+- name: set patch list
+  find: 
+    paths: "{{ patch_dir }}/{{ grid_psu_number }}"
+    patterns: "^[1-9].*"
+    recurse: no
+    use_regex: yes
+    file_type: directory
+  register: patchlist
+
+- name: update Opatch
+  unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ grid_home }} remote_src=yes exclude=PatchSearch.xml
+  become: true
+  become_user: grid
+
+- name: patch conflict detection
+  shell: "export ORACLE_HOME={{ grid_home }}; $ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph {{ item.path }}"
+  become: true
+  become_user: grid
+  register: conflict_detection
+  failed_when: "'Prereq \"checkConflictAgainstOHWithDetail\" passed.' not in conflict_detection.stdout"
+  with_items: 
+    "{{ patchlist.files }}"
+
+- name: roothas prepatch
+  shell: "{{ grid_home }}/crs/install/roothas.pl -prepatch"
+
+- name: apply psu
+  shell: "export ORACLE_HOME={{ grid_home}}; $ORACLE_HOME/OPatch/opatch apply {{ item.path }} -silent"
+  become: true
+  become_user: grid
+  register: apply_psu
+  failed_when: "'successfully applied.' not in apply_psu.stdout"
+  with_items:
+    "{{ patchlist.files }}"
+
+- name: roothas postpatch
+  shell: "{{ grid_home }}/crs/install/roothas.pl -postpatch"
+
+
