@@ -1,5 +1,15 @@
 ---
 
+- name: change binaries owner to grid
+  file: path={{ item }} owner=grid group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ grid_psu }}"
+
+- name: unzip GRID psu
+  unarchive: src={{ patch_dir }}/{{ grid_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
 - name: set grid home permissions
   file: path={{ grid_home}} owner=grid group=oinstall
 

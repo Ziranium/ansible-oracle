@@ -1,5 +1,15 @@
 ---
 
+- name: change binaries owner to oracle
+  file: path={{ item }} owner=oracle group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ rdbms_psu }}"
+
+- name: unzip RDBMS psu
+  unarchive: src={{ patch_dir }}/{{ rdbms_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+
 - name: update Opatch
   unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ oracle_home }} remote_src=yes exclude=PatchSearch.xml
   become: true

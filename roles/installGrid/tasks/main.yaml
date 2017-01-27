@@ -1,5 +1,21 @@
 ---
 
+- name: change binaries owner to grid
+  file: path={{ item }} owner=grid group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ grid_zip_part1 }}"
+    - "{{ patch_dir }}/{{ grid_zip_part2 }}"
+
+- name: unzip GRID installer (1/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: unzip GRID installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
 - name: concat disk
   set_fact:
     grid_disklist: "{{ grid_disklist + 'ORCL:' + item.asm + ',' }}"
