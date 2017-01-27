@@ -51,4 +51,5 @@
 - name: roothas postpatch
   shell: "{{ grid_home }}/crs/install/roothas.pl -postpatch"
 
-
+- name: clean unzipped
+  file: path={{ patch_dir }}/{{ grid_psu_number }} state=absent

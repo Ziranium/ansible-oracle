@@ -87,4 +87,6 @@
   register: asmca
   failed_when: "'ERROR' in asmca.stdout"
 
+- name: clean unzipped
+  file: path={{ patch_dir }}/grid state=absent
 

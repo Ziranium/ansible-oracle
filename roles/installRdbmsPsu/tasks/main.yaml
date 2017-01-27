@@ -39,3 +39,5 @@
   register: apply_psu
   failed_when: "'Composite patch {{ rdbms_psu_number }} successfully applied.' not in apply_psu.stdout"
 
+- name: clean unzipped
+  file: path={{ patch_dir }}/{{ rdbms_psu_number }} state=absent

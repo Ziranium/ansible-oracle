@@ -31,3 +31,6 @@
 
 - name: execute orainstRoot.sh
   shell: "{{ oracle_home }}/root.sh"
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/database state=absent

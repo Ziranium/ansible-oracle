@@ -56,15 +56,16 @@
     dbca_initparam_redologdest2: '+DG_DATA'
 
   roles:
-    - updateLinux
-    - prereqOracle
-    - installGrid
-    - installGridPsu
-    - createAsmDg
-    - installRdbms
-    - installRdbmsPsu
-    - createListener
-    - createDatabase
+#    - updateLinux
+#    - prereqOracle
+#    - installGrid
+#    - installGridPsu
+#    - createAsmDg
+#    - installRdbms
+#    - installRdbmsPsu
+#    - createListener
+#    - createDatabase
+    - cleanInstallDir
 
 
 
