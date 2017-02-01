@@ -1,0 +1,19 @@
+---
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/{{ item }} state=absent
+  with_items:
+    - "{{ opatch_patch }}"
+    - "{{ grid_zip_part1 }}"
+    - "{{ grid_zip_part2 }}"
+    - "{{ grid_asmlib }}"
+    - "{{ grid_asmsupport }}"
+    - "{{ grid_psu }}"
+    - "{{ rdbms_zip_part1 }}"
+    - "{{ rdbms_zip_part2 }}"
+    - "{{ rdbms_psu }}"
+    - oracleasm_config.sh
+    - PatchSearch.xml
+    - grid.rsp
+    - rdbms.rsp
+    - dbca.rsp
