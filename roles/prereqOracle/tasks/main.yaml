@@ -11,10 +11,10 @@
   failed_when: tmpsize.stdout|int < {{ tmp_size_gb }} * 1024 * 1024
 
 - name: create group dba
-  group: name=dba state=present
+  group: name=dba state=present gid=1300
 
 - name: create group oinstall
-  group: name=oinstall state=present
+  group: name=oinstall state=present gid=1000
 
 - name: create user oracle
   user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba
