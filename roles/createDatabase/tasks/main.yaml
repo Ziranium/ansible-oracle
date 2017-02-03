@@ -69,6 +69,16 @@
   register: systemAltered
   failed_when: "'System altered' not in systemAltered.stdout"
 
+- name: use_large_pages only
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ dbca_dbname }}
+    echo "ALTER SYSTEM SET use_large_pages=only SCOPE=SPFILE;" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: systemAltered
+  failed_when: "'System altered' not in systemAltered.stdout"
+
 - name: restart database
   shell: |
     source /home/oracle/.bash_profile
