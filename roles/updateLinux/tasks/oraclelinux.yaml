@@ -3,8 +3,8 @@
 
 - name: install new packages oracle linux
   yum: name=rsync,unzip,oracle-rdbms-server-12cR1-preinstall
-  environment:
-     http_proxy: "{{ proxy }}"
+#  environment:
+#     http_proxy: "{{ proxy }}"
 
 
 

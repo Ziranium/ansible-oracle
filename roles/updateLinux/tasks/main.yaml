@@ -2,13 +2,13 @@
 
 - name: install python-simplejson
   yum: name=python-simplejson state=latest 
-  environment:
-       http_proxy: "{{ proxy }}"
+#  environment:
+#       http_proxy: "{{ proxy }}"
 
 - name: upgrade all packages
   yum: name=* state=latest
-  environment:
-     http_proxy: "{{ proxy }}"
+#  environment:
+#     http_proxy: "{{ proxy }}"
 
 - name: include rhel/centos spec
   include: rhel.yaml
@@ -21,8 +21,8 @@
 
 - name: install python-selinux
   yum: name=libselinux-python state=installed
-  environment:
-      http_proxy: "{{ proxy }}"
+#  environment:
+#      http_proxy: "{{ proxy }}"
 
 - name: add public key to authorized_key file of root
   authorized_key: user=root state=present key="{{ lookup('file','/root/.ssh/id_rsa.pub') }}"
