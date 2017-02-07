@@ -1,0 +1,12 @@
+---
+
+- name: install new packages rhel/centos
+  yum: name=compat-libcap1,compat-libstdc++-33,cpp,gcc,gcc-c++,glibc-devel,glibc-headers,kernel-headers,libXmu,libXt,ksh,libXxf86misc,libXxf86vm,libaio-devel,libdmx,libstdc++-devel,mpfr,make,xorg-x11-utils,xorg-x11-xauth,libXv,libXxf86dga,rsync,unzip state=latest
+  environment:
+    http_proxy: "{{ proxy }}"
+
+- name: install 'X Window System' package group
+  yum: name="@X Window System" state=present
+  environment:
+    http_proxy: "{{ proxy }}"
+
