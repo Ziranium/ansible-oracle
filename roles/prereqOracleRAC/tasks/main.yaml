@@ -24,24 +24,32 @@
 
 - name: create directory for installation files
   file: dest={{ patch_dir }} state=directory owner=oracle group=oinstall
-  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: create directory for rdbms installation
   file: dest={{ oracle_root }} state=directory owner=oracle group=oinstall
 
-- name: copy installer
+- name: copy installer to install node
   synchronize:
     src=files/
     dest={{ patch_dir }}
     mode=push
   when: inventory_hostname == "{{ grid_installnode }}"
 
+- name: copy asm rpm to others nodes
+  copy:
+    src: files/{{ item }}
+    dest: {{ patch_dir }}/{{ item }}
+    mode: 0755
+  with_items:
+    - "{{ grid_asmlib }}"
+    - "{{ grid_asmsupport }}"
+  when: inventory_hostname != "{{ grid_installnode }}"
+
 - name: chmod oracle root
   file: path={{ oracle_root }} owner=oracle group=oinstall mode=0775 state=directory
 
 - name: chmod install directory
   file: path={{ patch_dir }} owner=oracle group=oinstall mode=0775 state=directory
-  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: get memory total
   shell: grep MemTotal /proc/meminfo | awk 'END { print $2 }'
