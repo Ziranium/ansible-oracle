@@ -39,6 +39,7 @@
 
 - name: chmod install directory
   file: path={{ patch_dir }} owner=oracle group=oinstall mode=0775 state=directory
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: get memory total
   shell: grep MemTotal /proc/meminfo | awk 'END { print $2 }'

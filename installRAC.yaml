@@ -8,6 +8,7 @@
     u01_size_gb: 20
     tmp_size_gb: 1.5
     # GRID
+    grid_installnode: 172.31.226.197
     grid_nodes: "signxttst006:signxttst006-vip,signxttst007:signxttst007-vip"
     grid_if_public: "eth0:172.31.226.197"
     grid_if_private: "eth1:172.25.105.48"
@@ -57,8 +58,8 @@
 
   roles:
     - updateLinux
-    - prereqOracle
-#    - installGrid
+    - prereqOracleRAC
+#    - installGridRAC
 #    - installGridPsu
 #    - createAsmDg
 #    - installRdbms
