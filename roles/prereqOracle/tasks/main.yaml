@@ -5,10 +5,10 @@
   register: u01size
   failed_when: u01size.stdout|int < {{ u01_size_gb }} * 1024 * 1024
 
-- name: check tmp free disk space
-  shell: df -P /tmp | awk 'END { print $4 }'
-  register: tmpsize
-  failed_when: tmpsize.stdout|int < {{ tmp_size_gb }} * 1024 * 1024
+#- name: check tmp free disk space
+#  shell: df -P /tmp | awk 'END { print $4 }'
+#  register: tmpsize
+#  failed_when: tmpsize.stdout|int < {{ tmp_size_gb }} * 1024 * 1024
 
 - name: create group dba
   group: name=dba state=present gid=1300

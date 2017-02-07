@@ -1,0 +1,92 @@
+---
+
+- name: change binaries owner to grid
+  file: path={{ item }} owner=grid group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ grid_zip_part1 }}"
+    - "{{ patch_dir }}/{{ grid_zip_part2 }}"
+
+- name: unzip GRID installer (1/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: unzip GRID installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: concat disk
+  set_fact:
+    grid_disklist: "{{ grid_disklist + 'ORCL:' + item.asm + ',' }}"
+  with_items:
+     "{{ grid_asmdisk }}"
+
+- name: install kmod-oracleasm
+  yum: name=kmod-oracleasm state=latest
+  environment:
+     http_proxy: "{{ proxy }}"
+
+- name: install oracleasmlib
+  yum: name={{ patch_dir }}/{{ grid_asmlib }} state=present
+
+- name: install oracleasm-support
+  yum: name={{ patch_dir }}/{{ grid_asmsupport }} state=present
+
+- name: chmod oracleasm_config.sh
+  file: path={{ patch_dir }}/oracleasm_config.sh mode=0755
+
+- name: execute oracleasm_config.sh
+  shell: "{{ patch_dir }}/oracleasm_config.sh"
+
+- name: init oracleasm
+  shell: "/usr/sbin/oracleasm init"
+
+- name: create ASM disks
+  shell: "/usr/sbin/oracleasm createdisk {{ item.asm }} {{ item.dev }}"
+  with_items: 
+    "{{ grid_asmdisk }}"
+
+- name: create grid responsefile
+  template: src=grid.rsp.tpl dest={{ patch_dir }}/grid.rsp owner=grid group=oinstall mode=0755
+
+- name: unzip GRID installer (1/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: unzip GRID installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: install grid only
+  shell: "{{ patch_dir }}/grid/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/grid.rsp"
+  become: true
+  become_user: grid
+  register: grid_install
+  failed_when: "'Successfully Setup Software' not in grid_install.stdout"
+
+- name: execute orainstRoot.sh
+  shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"
+
+- name: execute root.sh
+  shell: "{{ grid_home }}/root.sh"
+
+- name: execute configToolAllCommands
+  shell: "{{ grid_home }}/cfgtoollogs/configToolAllCommands RESPONSE_FILE={{ patch_dir }}grid.rsp"
+  become: true
+  become_user: grid
+  register: configToolAllCommands
+  failed_when: "'ERROR' in configToolAllCommands.stdout"
+
+- name: create asm instance
+  shell: "{{ grid_home }}/bin/asmca -silent -configureASM -sysAsmPassword {{ dbca_pwdsys }} -asmsnmpPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ grid_dgname }} -diskList {{ grid_disklist[:-1] }} -redundancy EXTERNAL"
+  become: true
+  become_user: grid
+  register: asmca
+  failed_when: "'ERROR' in asmca.stdout"
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/grid state=absent
+
