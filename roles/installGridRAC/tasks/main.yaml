@@ -5,22 +5,27 @@
   with_items:
     - "{{ patch_dir }}/{{ grid_zip_part1 }}"
     - "{{ patch_dir }}/{{ grid_zip_part2 }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+  
 
 - name: unzip GRID installer (1/2)
   unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
   become: true
   become_user: grid
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: unzip GRID installer (2/2)
   unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
   become: true
   become_user: grid
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: concat disk
   set_fact:
     grid_disklist: "{{ grid_disklist + 'ORCL:' + item.asm + ',' }}"
   with_items:
      "{{ grid_asmdisk }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: install kmod-oracleasm
   yum: name=kmod-oracleasm state=latest
