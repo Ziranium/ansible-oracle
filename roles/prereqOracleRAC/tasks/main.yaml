@@ -24,6 +24,7 @@
 
 - name: create directory for installation files
   file: dest={{ patch_dir }} state=directory owner=oracle group=oinstall
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: create directory for rdbms installation
   file: dest={{ oracle_root }} state=directory owner=oracle group=oinstall
@@ -33,6 +34,7 @@
     src=files/
     dest={{ patch_dir }}
     mode=push
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: chmod oracle root
   file: path={{ oracle_root }} owner=oracle group=oinstall mode=0775 state=directory
