@@ -1,5 +1,5 @@
 ---
-- hosts: testjla
+- hosts: oraclelinux
   vars:
     # GLOBAL
     patch_dir: /u01/install
@@ -57,15 +57,15 @@
 
   roles:
     - updateLinux
-    - prereqOracle
-    - installGrid
-    - installGridPsu
-    - createAsmDg
-    - installRdbms
-    - installRdbmsPsu
-    - createListener
-    - createDatabase
-    - cleanInstallDir
+#    - prereqOracle
+#    - installGrid
+#    - installGridPsu
+#    - createAsmDg
+#    - installRdbms
+#    - installRdbmsPsu
+#    - createListener
+#    - createDatabase
+#    - cleanInstallDir
 
 
 
