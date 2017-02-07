@@ -37,8 +37,8 @@
 
 - name: copy asm rpm to others nodes
   copy:
-    src: files/{{ item }}
-    dest: {{ patch_dir }}/{{ item }}
+    src: "files/{{ item }}"
+    dest: "{{ patch_dir }}/{{ item }}"
     mode: 0755
   with_items:
     - "{{ grid_asmlib }}"
