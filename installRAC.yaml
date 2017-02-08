@@ -3,7 +3,7 @@
   vars:
     # GLOBAL
     patch_dir: /u01/install
-    proxy: http://proxy.svc.sigma.host:8080
+    proxy: http://proxy:8080
     opatch_patch: p6880880_121010_Linux-x86-64.zip
     u01_size_gb: 20
     tmp_size_gb: 1.5
