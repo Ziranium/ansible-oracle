@@ -24,10 +24,8 @@
 
 - name: install kmod-oracleasm
   yum: name=kmod-oracleasm state=latest
-  environment:
-     http_proxy: "{{ proxy }}"
-  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
-        (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
+#  environment:
+#     http_proxy: "{{ proxy }}"
 
 - name: install oracleasmlib
   yum: name={{ patch_dir }}/{{ grid_asmlib }} state=present
@@ -48,6 +46,10 @@
   shell: "{{ patch_dir }}/oracleasm_config.sh"
   when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
         (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
+
+- name: install pkg asm oracle linux
+  yum: name=oracleasm-support state=latest
+  when: (ansible_distribution == "OracleLinux" and ansible_distribution_major_version == "7")
 
 - name: init oracleasm
   shell: "/usr/sbin/oracleasm init"
