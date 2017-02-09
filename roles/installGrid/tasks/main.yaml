@@ -37,19 +37,19 @@
   when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
         (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
 
-- name: chmod oracleasm_config.sh
-  file: path={{ patch_dir }}/oracleasm_config.sh mode=0755
-  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
-        (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
-
-- name: execute oracleasm_config.sh
-  shell: "{{ patch_dir }}/oracleasm_config.sh"
-  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
-        (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
-
 - name: install pkg asm oracle linux
   yum: name=oracleasm-support state=latest
   when: (ansible_distribution == "OracleLinux" and ansible_distribution_major_version == "7")
+
+- name: chmod oracleasm_config.sh
+  file: path={{ patch_dir }}/oracleasm_config.sh mode=0755
+#  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
+#        (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
+
+- name: execute oracleasm_config.sh
+  shell: "{{ patch_dir }}/oracleasm_config.sh"
+#  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
+#        (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
 
 - name: init oracleasm
   shell: "/usr/sbin/oracleasm init"
