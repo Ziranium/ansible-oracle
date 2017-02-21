@@ -1,0 +1,39 @@
+---
+
+- name: change binaries owner to oracle
+  file: path={{ item }} owner=oracle group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ rdbms_psu }}"
+
+- name: unzip RDBMS psu
+  unarchive: src={{ patch_dir }}/{{ rdbms_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+
+- name: update Opatch
+  unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ oracle_home }} remote_src=yes exclude=PatchSearch.xml
+  become: true
+  become_user: oracle
+
+- name: resync ntpdate
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
+
+- name: patch conflict detection
+  shell: "export ORACLE_HOME={{ oracle_home }}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ rdbms_psu_number }} -analyze -oh {{ oracle_home }}"
+  register: conflict_detection
+  failed_when: "'OPatchAuto successful' not in conflict_detection.stdout"
+
+- name: apply psu on install node
+  shell: "export ORACLE_HOME={{ oracle_home }}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ rdbms_psu_number }} -oh {{ oracle_home }}"
+  register: apply_psu
+  failed_when: "'OPatchAuto successful' not in apply_psu.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: apply psu on others nodes
+  shell: "export ORACLE_HOME={{ oracle_home }}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ rdbms_psu_number }} -oh {{ oracle_home }}"
+  register: apply_psu
+  failed_when: "'OPatchAuto successful' not in apply_psu.stdout"
+  when: inventory_hostname != "{{ grid_installnode }}"
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/{{ rdbms_psu_number }} state=absent

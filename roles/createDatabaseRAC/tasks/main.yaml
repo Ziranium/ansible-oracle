@@ -1,0 +1,108 @@
+---
+
+- name: create dbca responsefile
+  template: src=dbca.rsp.tpl dest={{ patch_dir }}/dbca.rsp owner=oracle group=oinstall mode=0755
+  tags:
+    - install
+
+- name: create directories
+  file: path={{ item }} owner=oracle group=oinstall state=directory
+  with_items:
+    - "{{ dbca_initparam_dbrecoverydest }}"
+    - "{{ dbca_initparam_redologdest1 }}"
+    - "{{ dbca_initparam_redologdest2 }}"
+    - "{{ oracle_base }}/fast_recovery_area/{{ dbca_dbname }}"
+    - "{{ oracle_base }}/oradata/{{ dbca_dbname }}"
+    - "{{ dbca_initparam_oradata }}"
+  when: "'/' in '{{ item }}'"
+  tags:
+    - install
+
+- name: create database
+  shell: "{{ oracle_home }}/bin/dbca -silent -responseFile {{ patch_dir }}/dbca.rsp"
+  become: true
+  become_user: oracle
+  when: inventory_hostname == "{{ grid_installnode }}"
+  tags:
+    - install
+
+- name: get instance name
+  shell: "ps -elf | grep [p]mon_ | grep -v ASM | rev | cut -d_ -f 1 | rev"
+  register: instName
+  tags:
+    - spfile
+
+- name: configure adrci database
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout }}
+    echo "set home diag/rdbms/{{ dbca_dbname |lower }}/{{ instName.stdout  |upper }}
+    set control (SHORTP_POLICY=168)
+    set control (LONGP_POLICY=168)" | {{ oracle_home }}/bin/adrci
+  become: true
+  become_user: oracle
+
+- name: configure default profile
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout  }}
+    echo "ALTER PROFILE DEFAULT LIMIT FAILED_LOGIN_ATTEMPTS UNLIMITED PASSWORD_LIFE_TIME UNLIMITED;" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: profileAltered
+  failed_when: "'Profile altered' not in profileAltered.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: noaudit ORA_SECURECONFIG
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout  }}
+    echo "noaudit policy ORA_SECURECONFIG;" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: noauditSECURECONFIG
+  failed_when: "'Noaudit succeeded' not in noauditSECURECONFIG.stdout"
+
+- name: noaudit ORA_LOGON_FAILURES
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout  }}
+    echo "noaudit policy ORA_LOGON_FAILURES;" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: noauditORA_LOGON_FAILURES
+  failed_when: "'Noaudit succeeded' not in noauditORA_LOGON_FAILURES.stdout"
+
+- name: disable audit_trail
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout  }}
+    echo "alter system set audit_trail='NONE' scope=spfile;" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: systemAltered
+  failed_when: "'System altered' not in systemAltered.stdout"
+
+- name: use_large_pages only
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout  }}
+    echo "ALTER SYSTEM SET use_large_pages=only SCOPE=SPFILE;" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: systemAltered
+  failed_when: "'System altered' not in systemAltered.stdout"
+
+- name: restart database
+  shell: |
+    source /home/oracle/.bash_profile
+    export ORACLE_SID={{ instName.stdout  }}
+    echo "shutdown immediate
+    startup" | sqlplus -s / as sysdba
+  become: true
+  become_user: oracle
+  register: restartDB
+  failed_when: "'ORA-' in restartDB.stdout"
+
+
+

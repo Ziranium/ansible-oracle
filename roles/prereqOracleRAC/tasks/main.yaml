@@ -17,10 +17,27 @@
   group: name=oinstall state=present gid=1000
 
 - name: create user oracle
-  user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba
+  user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba generate_ssh_key=yes
 
 - name: create user grid
-  user: name=grid comment="Oracle GRID user" group=oinstall groups=oinstall,dba
+  user: name=grid comment="Oracle GRID user" group=oinstall groups=oinstall,dba generate_ssh_key=yes
+
+- name: get ssh keys
+  fetch:
+    src: /home/{{ item }}/.ssh/id_rsa.pub
+    dest: /tmp/id_rsa.pub
+  with_items:
+    - oracle
+    - grid
+
+- name: set keys
+  authorized_key:
+    user: "{{ item[0] }}"
+    state: present
+    key: "{{ lookup('file', '/tmp/id_rsa.pub/{{ item[1] }}/home/{{ item[0] }}/.ssh/id_rsa.pub') }}"
+  with_nested:
+    - [ 'oracle', 'grid' ]
+    - "{{ groups['centosrac'] }}"
 
 - name: create directory for installation files
   file: dest={{ patch_dir }} state=directory owner=oracle group=oinstall
@@ -28,22 +45,30 @@
 - name: create directory for rdbms installation
   file: dest={{ oracle_root }} state=directory owner=oracle group=oinstall
 
-- name: copy installer to install node
-  synchronize:
-    src=files/
-    dest={{ patch_dir }}
-    mode=push
-  when: inventory_hostname == "{{ grid_installnode }}"
+- name: create directory for rdbms installation
+  file: dest={{ oracle_base }} state=directory owner=oracle group=oinstall
 
-- name: copy asm rpm to others nodes
-  copy:
-    src: "files/{{ item }}"
-    dest: "{{ patch_dir }}/{{ item }}"
-    mode: 0755
-  with_items:
-    - "{{ grid_asmlib }}"
-    - "{{ grid_asmsupport }}"
-  when: inventory_hostname != "{{ grid_installnode }}"
+#- name: copy installer to install node
+#  synchronize:
+#    src=files/
+#    dest={{ patch_dir }}
+#    mode=push
+#  when: inventory_hostname == "{{ grid_installnode }}"
+
+#- name: copy pkg to others nodes
+#  copy:
+#    src: "files/{{ item }}"
+#    dest: "{{ patch_dir }}/{{ item }}"
+#    mode: 0755
+#  with_items:
+#    - "{{ grid_asmlib }}"
+#    - "{{ grid_asmsupport }}"
+#    - "{{ patch_dir }}/oracleasm_config.sh"
+#    - "{{ patch_dir }}/sshKey.sh"
+#    - "{{ patch_dir }}/{{ opatch_patch }}"
+#    - "{{ patch_dir }}/{{ grid_psu }}"
+#    - "{{ patch_dir }}/{{ rdbms_psu }}"
+#  when: inventory_hostname != "{{ grid_installnode }}"
 
 - name: chmod oracle root
   file: path={{ oracle_root }} owner=oracle group=oinstall mode=0775 state=directory
@@ -101,6 +126,14 @@
       export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
       export CLASSPATH=$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
       umask 022
+      alias sqlplus="rlwrap sqlplus"
+      alias dgmgrl="rlwrap dgmgrl"
+      alias rman="rlwrap rman"
+      alias lsnrctl="rlwrap lsnrctl"
+      alias asmcmd="rlwrap asmcmd"
+      alias adrci="rlwrap adrci"
+      alias impdp="rlwrap impdp"
+      alias expdp="rlwrap expdp"
     marker: "# {mark} Oracle Environnement"
 
 - name: update bash_profile user grid
@@ -117,6 +150,14 @@
       export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$ORACLE_HOME/oracm/lib:/lib:/usr/lib:/usr/local/lib
       export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib:$ORACLE_HOME/network/jlib
       umask 022
+      alias sqlplus="rlwrap sqlplus"
+      alias dgmgrl="rlwrap dgmgrl"
+      alias rman="rlwrap rman"
+      alias lsnrctl="rlwrap lsnrctl"
+      alias asmcmd="rlwrap asmcmd"
+      alias adrci="rlwrap adrci"
+      alias impdp="rlwrap impdp"
+      alias expdp="rlwrap expdp"
     marker: "# {mark} Grid Environnement"
 
 - name: set ntpd options
@@ -125,10 +166,20 @@
     regexp: '^OPTIONS='
     line: 'OPTIONS="-g -x -p /var/run/ntpd.pid"'
 
+- name: autostart ntpd
+  systemd:
+    name: ntpd
+    enabled: yes
+
 - name: restart ntpd
-  service:
+  systemd:
     name: ntpd
     state: restarted
+
+- name: disable chronyd if centos
+  systemd:
+    name: chronyd
+    enabled: no
 
 - name: restart machine
   shell: sleep 2 && shutdown -r now "Ansible updates triggered"

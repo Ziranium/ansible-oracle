@@ -3,31 +3,38 @@
   vars:
     # GLOBAL
     patch_dir: /u01/install
-    proxy: http://proxy:8080
+    proxy: http://proxy.svc.sigma.host:8080
     opatch_patch: p6880880_121010_Linux-x86-64.zip
     u01_size_gb: 20
     tmp_size_gb: 1.5
     # GRID
+    grid_asmpass: Password1
     grid_installnode: 172.31.226.197
+    grid_cluname: CLUJLA
+    grid_scan: clujla-scan.srv.sigma.host
+    grid_publicnodes: "signxttst006 signxttst007"
     grid_nodes: "signxttst006:signxttst006-vip,signxttst007:signxttst007-vip"
-    grid_if_public: "eth0:172.31.226.197"
-    grid_if_private: "eth1:172.25.105.48"
+    grid_if_public: "eth0:172.31.226.192"
+    grid_if_private: "eth1:172.25.105.0"
     grid_base: /u01/app/grid
-    grid_home: /u01/app/grid/product/12.1.0.2/dbhome_1
+    grid_home: /u01/app/12.1.0.2/grid/dbhome_1
     grid_zip_part1: linuxamd64_12102_grid_1of2.zip
     grid_zip_part2: linuxamd64_12102_grid_2of2.zip
     grid_dgname: 'DG_CRS'
-    grid_asmdisk: [ { dev: '/dev/loop1', asm: 'ASM_CRS_01' }, { dev: '/dev/loop2', asm: 'ASM_CRS_02' }, { dev: '/dev/loop3', asm: 'ASM_CRS_03' } ]
+    grid_asmdisk: [ { dev: '/dev/sdb1', asm: 'ASM_CRS_01' }, { dev: '/dev/sdc1', asm: 'ASM_CRS_02' }, { dev: '/dev/sdd1', asm: 'ASM_CRS_03' } ]
     grid_disklist: "" # LAISSER VIDE
     grid_asmlib: oracleasmlib-2.0.12-1.el7.x86_64.rpm
     grid_asmsupport: oracleasm-support-2.1.8-3.el7.x86_64.rpm
-    # ASM DG (2nd)
-    asmdg_disklist: "" # LAISSER VIDE
-    asmdg_dgname: 'DG_DATA'
-    asmdg_asmdisk: [ { dev: '/dev/loop4', asm: 'ASM_DATA_01' }, { dev: '/dev/loop5', asm: 'ASM_DATA_02' } ]
+    # ASM DG : DATA + FRA
+    asmdg_disklistdata: "" # LAISSER VIDE
+    asmdg_dgnamedata: 'DG_DATA'
+    asmdg_asmdiskdata: [ { dev: '/dev/sde1', asm: 'ASM_DATA_01' }, { dev: '/dev/sdf1', asm: 'ASM_DATA_02' } ]
+    asmdg_disklistfra: "" # LAISSER VIDE
+    asmdg_dgnamefra: 'DG_FRA'
+    asmdg_asmdiskfra: [ { dev: '/dev/sdg1', asm: 'ASM_FRA_01' }, { dev: '/dev/sdh1', asm: 'ASM_FRA_02' } ]
     # GRID PSU
-    grid_psu: p24412235_121020_Linux-x86-64.zip
-    grid_psu_number: 24412235
+    grid_psu: p24917825_121020_Linux-x86-64.zip
+    grid_psu_number: 24917825
     # RDBMS
     oracle_root: /u01/app
     oracle_base: /u01/app/oracle
@@ -47,10 +54,10 @@
     dbca_pwdsystem: Password1
     dbca_charset: WE8ISO8859P15
     dbca_ncharset: UTF8
-    dbca_initparam_sgamax_mb: 512
-    dbca_initparam_sga_mb: 512
+    dbca_initparam_sgamax_mb: 1024
+    dbca_initparam_sga_mb: 1024
     dbca_initparam_pga_mb: 100
-    dbca_initparam_dbrecoverydest: /u01/app/oracle/fra/
+    dbca_initparam_dbrecoverydest: '+DG_FRA'
     dbca_initparam_dbrecoverydestsize: 1024
     dbca_initparam_oradata: '+DG_DATA'
     dbca_initparam_redologdest1: '+DG_FRA'
@@ -59,14 +66,11 @@
   roles:
     - updateLinux
     - prereqOracleRAC
-#    - installGridRAC
-#    - installGridPsu
-#    - createAsmDg
-#    - installRdbms
-#    - installRdbmsPsu
-#    - createListener
-#    - createDatabase
-#    - cleanInstallDir
-
-
+    - installGridRAC
+    - installGridPsuRAC
+    - createAsmDgRAC
+    - installRdbmsRAC
+    - installRdbmsPsuRAC
+    - createDatabaseRAC
+    - cleanInstallDir
 

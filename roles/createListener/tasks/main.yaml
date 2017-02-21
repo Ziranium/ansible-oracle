@@ -1,13 +1,5 @@
 ---
 
-#- name: create netca responsefile
-#  template: src=lsnr.rsp.tpl dest={{ patch_dir }}/lsnr.rsp owner=oracle group=oinstall mode=0755
-
-#- name: create listener
-#  shell: "{{ oracle_home }}/bin/netca -silent -responseFile {{ patch_dir }}/lsnr.rsp"
-#  become: true
-#  become_user: grid
-
 - name: configure adrci lsnr
   shell: |
     source /home/grid/.bash_profile

@@ -17,10 +17,10 @@
   group: name=oinstall state=present gid=1000
 
 - name: create user oracle
-  user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba
+  user: name=oracle comment="Oracle RDBMS user" group=oinstall groups=oinstall,dba generate_ssh_key=yes
 
 - name: create user grid
-  user: name=grid comment="Oracle GRID user" group=oinstall groups=oinstall,dba
+  user: name=grid comment="Oracle GRID user" group=oinstall groups=oinstall,dba generate_ssh_key=yes
 
 - name: create directory for installation files
   file: dest={{ patch_dir }} state=directory owner=oracle group=oinstall
@@ -90,6 +90,14 @@
       export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
       export CLASSPATH=$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
       umask 022
+      alias sqlplus="rlwrap sqlplus"
+      alias dgmgrl="rlwrap dgmgrl"
+      alias rman="rlwrap rman"
+      alias lsnrctl="rlwrap lsnrctl"
+      alias asmcmd="rlwrap asmcmd"
+      alias adrci="rlwrap adrci"
+      alias impdp="rlwrap impdp"
+      alias expdp="rlwrap expdp"
     marker: "# {mark} Oracle Environnement"
 
 - name: update bash_profile user grid
@@ -106,6 +114,14 @@
       export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$ORACLE_HOME/oracm/lib:/lib:/usr/lib:/usr/local/lib
       export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib:$ORACLE_HOME/network/jlib
       umask 022
+      alias sqlplus="rlwrap sqlplus"
+      alias dgmgrl="rlwrap dgmgrl"
+      alias rman="rlwrap rman"
+      alias lsnrctl="rlwrap lsnrctl"
+      alias asmcmd="rlwrap asmcmd"
+      alias adrci="rlwrap adrci"
+      alias impdp="rlwrap impdp"
+      alias expdp="rlwrap expdp"
     marker: "# {mark} Grid Environnement"
 
 - name: set ntpd options
@@ -114,10 +130,20 @@
     regexp: '^OPTIONS='
     line: 'OPTIONS="-g -x -p /var/run/ntpd.pid"'
 
+- name: autostart ntpd
+  systemd:
+    name: ntpd
+    enabled: yes
+
 - name: restart ntpd
-  service:
+  systemd:
     name: ntpd
     state: restarted
+
+- name: disable chronyd if centos
+  systemd:
+    name: chronyd
+    enabled: no
 
 - name: restart machine
   shell: sleep 2 && shutdown -r now "Ansible updates triggered"

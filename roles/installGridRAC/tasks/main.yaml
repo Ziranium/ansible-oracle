@@ -7,7 +7,6 @@
     - "{{ patch_dir }}/{{ grid_zip_part2 }}"
   when: inventory_hostname == "{{ grid_installnode }}"
   
-
 - name: unzip GRID installer (1/2)
   unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
   become: true
@@ -37,6 +36,12 @@
 
 - name: install oracleasm-support
   yum: name={{ patch_dir }}/{{ grid_asmsupport }} state=present
+  when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
+        (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")
+
+- name: install pkg asm oracle linux
+  yum: name=oracleasm-support state=latest
+  when: (ansible_distribution == "OracleLinux" and ansible_distribution_major_version == "7")
 
 - name: chmod oracleasm_config.sh
   file: path={{ patch_dir }}/oracleasm_config.sh mode=0755
@@ -51,32 +56,61 @@
   shell: "/usr/sbin/oracleasm createdisk {{ item.asm }} {{ item.dev }}"
   with_items: 
     "{{ grid_asmdisk }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: scan ASM disks
+  shell: "/usr/sbin/oracleasm scandisks"
+  when: inventory_hostname != "{{ grid_installnode }}"
+
+- name: chmod sshKey.sh
+  file: path={{ patch_dir }}/sshKey.sh mode=0755
+
+- name: set ssh keys
+  shell: "{{ patch_dir }}/sshKey.sh {{ patch_dir }}/grid/sshsetup/sshUserSetup.sh '{{ grid_publicnodes }}' {{ item }} {{ item }}"
+  with_items:
+    - oracle
+    - grid
+  when: inventory_hostname == "{{ grid_installnode }}"
+  register: sshkey
+  failed_when: "'SSH verification complete.' not in sshkey.stdout"
 
 - name: create grid responsefile
   template: src=grid.rsp.tpl dest={{ patch_dir }}/grid.rsp owner=grid group=oinstall mode=0755
+  when: inventory_hostname == "{{ grid_installnode }}"
 
-- name: unzip GRID installer (1/2)
-  unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
-  become: true
-  become_user: grid
-
-- name: unzip GRID installer (2/2)
-  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
-  become: true
-  become_user: grid
+- name: resync ntpdate
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
 
 - name: install grid only
-  shell: "{{ patch_dir }}/grid/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/grid.rsp"
+  shell: "{{ patch_dir }}/grid/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/grid.rsp -ignorePrereq"
   become: true
   become_user: grid
   register: grid_install
   failed_when: "'Successfully Setup Software' not in grid_install.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: execute orainstRoot.sh
   shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"
 
-- name: execute root.sh
+- name: execute root.sh on install node
   shell: "{{ grid_home }}/root.sh"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: execute root.sh on others node
+  shell: "{{ grid_home }}/root.sh"
+  when: inventory_hostname != "{{ grid_installnode }}"
+
+- name: set asm password
+  lineinfile:
+    dest: "{{ patch_dir }}/grid.rsp"
+    line: 'oracle.assistants.asm|S_ASMPASSWORD={{ grid_asmpass }}'
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: set asm monitor password
+  lineinfile:
+    dest: "{{ patch_dir }}/grid.rsp"
+    line: 'oracle.assistants.asm|S_ASMMONITORPASSWORD={{ grid_asmpass }}'
+  when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: execute configToolAllCommands
   shell: "{{ grid_home }}/cfgtoollogs/configToolAllCommands RESPONSE_FILE={{ patch_dir }}grid.rsp"
@@ -84,14 +118,19 @@
   become_user: grid
   register: configToolAllCommands
   failed_when: "'ERROR' in configToolAllCommands.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
 
-- name: create asm instance
-  shell: "{{ grid_home }}/bin/asmca -silent -configureASM -sysAsmPassword {{ dbca_pwdsys }} -asmsnmpPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ grid_dgname }} -diskList {{ grid_disklist[:-1] }} -redundancy EXTERNAL"
-  become: true
-  become_user: grid
-  register: asmca
-  failed_when: "'ERROR' in asmca.stdout"
+- name: get ASM inst name
+  shell: "ps -elf | grep [a]sm_pmon_+ASM | rev | cut -d_ -f 1 | rev"
+  register: asmInstName
+
+- name: set ASM inst name
+  lineinfile:
+    dest: /home/grid/.bash_profile
+    regexp: '^export ORACLE_SID='
+    line: 'export ORACLE_SID={{ asmInstName.stdout }}'
 
 - name: clean unzipped
   file: path={{ patch_dir }}/grid state=absent
+  when: inventory_hostname == "{{ grid_installnode }}"
 

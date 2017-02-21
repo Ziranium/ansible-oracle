@@ -22,8 +22,8 @@
     asmdg_dgname: 'DG_FRA'
     asmdg_asmdisk: [ { dev: '/dev/sdd1', asm: 'ASM_FRA_01' }, { dev: '/dev/sde1', asm: 'ASM_FRA_02' } ]
     # GRID PSU
-    grid_psu: p24412235_121020_Linux-x86-64.zip
-    grid_psu_number: 24412235
+    grid_psu: p24917825_121020_Linux-x86-64.zip
+    grid_psu_number: 24917825
     # RDBMS
     oracle_root: /u01/app
     oracle_base: /u01/app/oracle

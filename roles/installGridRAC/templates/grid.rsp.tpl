@@ -10,6 +10,8 @@ oracle.install.asm.OSOPER=oinstall
 oracle.install.asm.OSASM=oinstall
 oracle.installer.autoupdates.option=SKIP_UPDATES
 oracle.install.crs.config.gpnp.configureGNS=false
+oracle.install.crs.config.gpnp.scanName={{ grid_scan }}
+oracle.install.crs.config.gpnp.scanPort=1521
 oracle.install.asm.SYSASMPassword=Password1
 oracle.install.asm.monitorPassword=Password1
 oracle.install.crs.config.autoConfigureClusterNodeVIP=false
@@ -19,7 +21,7 @@ oracle.install.crs.config.clusterNodes={{ grid_nodes }}
 oracle.install.crs.config.networkInterfaceList={{ grid_if_public }}:1,{{ grid_if_private }}:2
 oracle.install.crs.config.storageOption=ASM_STORAGE
 oracle.install.asm.diskGroup.name=DG_CRS
-oracle.install.asm.diskGroup.redundancy=EXTERNAL
+oracle.install.asm.diskGroup.redundancy=NORMAL
 oracle.install.asm.diskGroup.disks={{ grid_disklist[:-1] }}
 oracle.install.asm.diskGroup.diskDiscoveryString=ORCL:*
 

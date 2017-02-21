@@ -1,0 +1,47 @@
+---
+
+- name: change binaries owner to oracle
+  file: path={{ item }} owner=oracle group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ rdbms_zip_part1 }}"
+    - "{{ patch_dir }}/{{ rdbms_zip_part2 }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: unzip RDBMS installer (1/2)
+  unarchive: src={{ patch_dir }}/{{ rdbms_zip_part1 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: unzip RDBMS installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ rdbms_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: oracle
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: create rdbms responsefile
+  template: src=rdbms.rsp.tpl dest={{ patch_dir }}/rdbms.rsp owner=oracle group=oinstall mode=0755
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: create oracle base
+  file: path={{ oracle_base }} owner=oracle group=oinstall state=directory
+
+- name: resync ntpdate
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
+
+- name: install rdbms only
+  shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms.rsp" 
+  become: true
+  become_user: oracle
+  register: rdbms_install
+  failed_when: "'Successfully Setup Software' not in rdbms_install.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: execute orainstRoot.sh
+  shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"
+
+- name: execute orainstRoot.sh
+  shell: "{{ oracle_home }}/root.sh"
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/database state=absent

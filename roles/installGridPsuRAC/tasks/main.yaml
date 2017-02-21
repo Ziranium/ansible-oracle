@@ -1,0 +1,56 @@
+---
+
+- name: change binaries owner to grid
+  file: path={{ item }} owner=grid group=oinstall
+  with_items:
+    - "{{ patch_dir }}/{{ grid_psu }}"
+  tags:
+    - prepa
+
+- name: unzip GRID psu
+  unarchive: src={{ patch_dir }}/{{ grid_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+  tags:
+    - prepa
+
+- name: set grid home permissions
+  file: path={{ grid_home}} owner=grid group=oinstall
+  tags:
+    - prepa
+
+- name: update Opatch
+  unarchive: src={{ patch_dir }}/{{ opatch_patch }} dest={{ grid_home }} remote_src=yes exclude=PatchSearch.xml
+  become: true
+  become_user: grid
+  tags:
+    - prepa
+
+- name: resync ntpdate
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
+
+- name: patch conflict detection
+  shell: "export ORACLE_HOME={{ grid_home }}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ grid_psu_number }} -analyze"
+  register: conflict_detection
+  failed_when: "'Analysis for applying patches has completed successfully' not in conflict_detection.stdout"
+  tags:
+    - detection
+
+- name: apply psu on install node
+  shell: "export ORACLE_HOME={{ grid_home}}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ grid_psu_number }} -oh {{ grid_home }}"
+  register: apply_psu
+  failed_when: "'OPatchAuto successful' not in apply_psu.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
+  tags:
+    - apply
+
+- name: apply psu on others nodes
+  shell: "export ORACLE_HOME={{ grid_home}}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ grid_psu_number }}"
+  register: apply_psu
+  failed_when: "'OPatchAuto successful' not in apply_psu.stdout"
+  when: inventory_hostname != "{{ grid_installnode }}"
+  tags:
+    - apply
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/{{ grid_psu_number }} state=absent

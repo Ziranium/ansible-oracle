@@ -1,0 +1,51 @@
+---
+
+- name: concat disk DATA
+  set_fact:
+    asmdg_disklistdata: "{{ asmdg_disklistdata + 'ORCL:' + item.asm + ',' }}"
+  with_items:
+     "{{ asmdg_asmdiskdata }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: create ASM disks DATA
+  shell: "/usr/sbin/oracleasm createdisk {{ item.asm }} {{ item.dev }}"
+  with_items:
+    "{{ asmdg_asmdiskdata }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: scan ASM disks
+  shell: "/usr/sbin/oracleasm scandisks"
+  when: inventory_hostname != "{{ grid_installnode }}"
+
+- name: create asm diskgroup DATA
+  shell: "{{ grid_home }}/bin/asmca -silent -createDiskGroup -sysAsmPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ asmdg_dgnamedata }} -diskList '{{ asmdg_disklistdata[:-1] }}' -redundancy NORMAL"
+  become: true
+  become_user: grid
+  register: asmca
+  failed_when: "'ERROR' in asmca.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: concat disk FRA
+  set_fact:
+    asmdg_disklistfra: "{{ asmdg_disklistfra + 'ORCL:' + item.asm + ',' }}"
+  with_items:
+     "{{ asmdg_asmdiskfra }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: create ASM disks FRA
+  shell: "/usr/sbin/oracleasm createdisk {{ item.asm }} {{ item.dev }}"
+  with_items:
+    "{{ asmdg_asmdiskfra }}"
+  when: inventory_hostname == "{{ grid_installnode }}"
+
+- name: scan ASM disks
+  shell: "/usr/sbin/oracleasm scandisks"
+  when: inventory_hostname != "{{ grid_installnode }}"
+
+- name: create asm diskgroup FRA
+  shell: "{{ grid_home }}/bin/asmca -silent -createDiskGroup -sysAsmPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ asmdg_dgnamefra }} -diskList '{{ asmdg_disklistfra[:-1] }}' -redundancy NORMAL"
+  become: true
+  become_user: grid
+  register: asmca
+  failed_when: "'ERROR' in asmca.stdout"
+  when: inventory_hostname == "{{ grid_installnode }}"
