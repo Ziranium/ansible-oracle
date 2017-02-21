@@ -1,7 +1,7 @@
 ---
 
-- name: install epel repository
-  shell: "export https_proxy={{ proxy }}; yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y"
+#- name: install epel repository
+#  shell: "export https_proxy={{ proxy }}; yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y"
 
 - name: install new packages oracle linux
   yum: name=rsync,unzip,expect,oracle-rdbms-server-12cR1-preinstall,rlwrap
