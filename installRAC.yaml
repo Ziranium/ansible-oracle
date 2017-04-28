@@ -3,7 +3,7 @@
   vars:
     # GLOBAL
     patch_dir: /u01/install
-    proxy: http://proxy.svc.sigma.host:8080
+    proxy: http://proxy.svc.toto.host:8080
     opatch_patch: p6880880_121010_Linux-x86-64.zip
     u01_size_gb: 20
     tmp_size_gb: 1.5
@@ -11,7 +11,7 @@
     grid_asmpass: Password1
     grid_installnode: 172.31.226.197
     grid_cluname: CLUJLA
-    grid_scan: clujla-scan.srv.sigma.host
+    grid_scan: clujla-scan.srv.toto.host
     grid_publicnodes: "signxttst006 signxttst007"
     grid_nodes: "signxttst006:signxttst006-vip,signxttst007:signxttst007-vip"
     grid_if_public: "eth0:172.31.226.192"

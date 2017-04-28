@@ -27,7 +27,7 @@
   file: path={{ oracle_base }} owner=oracle group=oinstall state=directory
 
 - name: resync ntpdate
-  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.toto.host; systemctl start ntpd"
 
 - name: install rdbms only
   shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms.rsp" 

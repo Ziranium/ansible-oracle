@@ -79,7 +79,7 @@
   when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: resync ntpdate
-  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.toto.host; systemctl start ntpd"
 
 - name: install grid only
   shell: "{{ patch_dir }}/grid/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/grid.rsp -ignorePrereq"
