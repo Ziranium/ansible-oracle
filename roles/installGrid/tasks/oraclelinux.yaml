@@ -1,0 +1,16 @@
+---
+
+- name: unzip Grid psu cause bug OL7
+  unarchive: src={{ patch_dir }}/{{ grid_ol7_psu }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
+
+- name: apply psu on GI
+  shell: "export ORACLE_HOME={{ grid_home }}; $ORACLE_HOME/OPatch/opatch napply -oh {{ grid_home }} -local {{ patch_dir }}/{{ grid_ol7_psu_number }} -silent"
+  become: yes
+  become_user: grid
+  register: apply_psu
+  failed_when: "'successfully applied.' not in apply_psu.stdout"
+
+- name: clean unzipped
+  file: path={{ patch_dir }}/{{ grid_ol7_psu_number }} state=absent
