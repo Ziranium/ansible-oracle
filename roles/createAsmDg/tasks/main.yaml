@@ -12,7 +12,7 @@
     "{{ asmdg_asmdisk }}"
 
 - name: create asm diskgroup
-  shell: "{{ grid_home }}/bin/asmca -silent -createDiskGroup -sysAsmPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ asmdg_dgname }} -diskList '{{ asmdg_disklist[:-1] }}' -redundancy EXTERNAL"
+  shell: "{{ grid_home }}/bin/asmca -silent -createDiskGroup -sysAsmPassword {{ dbca_pwdsys }} -diskstring 'ORCL:*' -diskGroupName {{ asmdg_dgname }} -diskList '{{ asmdg_disklist[:-1] }}' -redundancy EXTERNAL -startup"
   become: true
   become_user: grid
   register: asmca

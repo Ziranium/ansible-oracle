@@ -11,10 +11,10 @@
   become: true
   become_user: grid
 
-- name: unzip GRID installer (2/2)
-  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
-  become: true
-  become_user: grid
+#- name: unzip GRID installer (2/2)
+#  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+#  become: true
+#  become_user: grid
 
 - name: concat disk
   set_fact:
@@ -56,16 +56,6 @@
 - name: create grid responsefile
   template: src=grid.rsp.tpl dest={{ patch_dir }}/grid.rsp owner=grid group=oinstall mode=0755
 
-- name: unzip GRID installer (1/2)
-  unarchive: src={{ patch_dir }}/{{ grid_zip_part1 }} dest={{ patch_dir }} remote_src=yes
-  become: true
-  become_user: grid
-
-- name: unzip GRID installer (2/2)
-  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
-  become: true
-  become_user: grid
-
 - name: install grid only
   shell: "{{ patch_dir }}/grid/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/grid.rsp"
   become: true
@@ -75,6 +65,10 @@
 
 - name: execute orainstRoot.sh
   shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"
+
+- name: include oracle linux spec
+  include: oraclelinux.yaml
+  when: (ansible_distribution == "OracleLinux" and ansible_distribution_major_version == "7")
 
 - name: execute root.sh
   shell: "{{ grid_home }}/root.sh"
@@ -92,6 +86,21 @@
   become_user: grid
   register: asmca
   failed_when: "'ERROR' in asmca.stdout"
+
+- name: check asm inst up
+  shell: "ps -elf | grep [a]sm_pmon_+ASM"
+  ignore_errors: yes
+  changed_when: false
+  register: asm_inst_status
+
+- name: start asm inst
+  shell: |
+    source /home/grid/.bash_profile
+    export ORACLE_SID=+ASM
+    echo "startup" | sqlplus / as sysasm
+  become: true
+  become_user: grid
+  when: asm_inst_status.rc != 0
 
 - name: clean unzipped
   file: path={{ patch_dir }}/grid state=absent

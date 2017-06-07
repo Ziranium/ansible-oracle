@@ -20,7 +20,7 @@
   when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: create rdbms responsefile
-  template: src=rdbms.rsp.tpl dest={{ patch_dir }}/rdbms.rsp owner=oracle group=oinstall mode=0755
+  template: src=rdbms{{ major_version }}.rsp.tpl dest={{ patch_dir }}/rdbms{{ major_version }}.rsp owner=oracle group=oinstall mode=0755
   when: inventory_hostname == "{{ grid_installnode }}"
 
 - name: create oracle base
@@ -30,7 +30,7 @@
   shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
 
 - name: install rdbms only
-  shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms.rsp" 
+  shell: "{{ patch_dir }}/database/runInstaller -silent -waitForCompletion -responseFile {{ patch_dir }}/rdbms{{ major_version }}.rsp" 
   become: true
   become_user: oracle
   register: rdbms_install

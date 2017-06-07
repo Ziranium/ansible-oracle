@@ -36,10 +36,37 @@
   with_items: 
     "{{ patchlist.files }}"
 
-- name: roothas prepatch
-  shell: "{{ grid_home }}/crs/install/roothas.pl -prepatch"
+- name: chmod generatePsuGridRespFile.sh 11
+  file: path={{ patch_dir }}/generatePsuGridRespFile.sh owner=grid group=oinstall mode=0755
+  when: major_version == 11
 
-- name: apply psu
+- name: generate response file 11
+  shell: |
+    source /home/grid/.bash_profile
+    {{ patch_dir }}/generatePsuGridRespFile.sh {{ grid_home }} {{ patch_dir }}
+  become: true
+  become_user: grid
+  when: major_version == 11
+
+- name: roothas prepatch 11
+  shell: "{{ grid_home }}/crs/install/roothas.pl -unlock"
+  when: major_version == 11
+
+- name: roothas prepatch 12
+  shell: "{{ grid_home }}/crs/install/roothas.pl -prepatch"
+  when: major_version == 12
+
+- name: apply psu 11
+  shell: "export ORACLE_HOME={{ grid_home}}; $ORACLE_HOME/OPatch/opatch apply {{ item.path }} -silent -ocmrf {{ patch_dir }}/gridpsu.rsp"
+  become: true
+  become_user: grid
+  register: apply_psu
+  failed_when: "'successfully applied.' not in apply_psu.stdout"
+  with_items:
+    "{{ patchlist.files }}"
+  when: major_version == 11
+
+- name: apply psu 12
   shell: "export ORACLE_HOME={{ grid_home}}; $ORACLE_HOME/OPatch/opatch apply {{ item.path }} -silent"
   become: true
   become_user: grid
@@ -47,9 +74,15 @@
   failed_when: "'successfully applied.' not in apply_psu.stdout"
   with_items:
     "{{ patchlist.files }}"
+  when: major_version == 12
 
-- name: roothas postpatch
+- name: roothas postpatch 11
+  shell: "{{ grid_home }}/crs/install/roothas.pl -patch"
+  when: major_version == 11
+
+- name: roothas postpatch 12
   shell: "{{ grid_home }}/crs/install/roothas.pl -postpatch"
+  when: major_version == 12
 
 - name: clean unzipped
   file: path={{ patch_dir }}/{{ grid_psu_number }} state=absent

@@ -2,8 +2,9 @@
 - hosts: oraclelinux
   vars:
     # GLOBAL
+    major_version: 11
     patch_dir: /u01/install
-    proxy: http://proxy:8080
+    proxy: http://proxy.svc.sigma.host:8080
     opatch_patch: p6880880_121010_Linux-x86-64.zip
     u01_size_gb: 20
     tmp_size_gb: 1.5
@@ -17,6 +18,9 @@
     grid_disklist: "" # LAISSER VIDE
     grid_asmlib: oracleasmlib-2.0.12-1.el7.x86_64.rpm
     grid_asmsupport: oracleasm-support-2.1.8-3.el7.x86_64.rpm
+    # SI OL7
+    grid_ol7_psu: p18370031_112040_Linux-x86-64.zip
+    grid_ol7_psu_number: 18370031
     # ASM DG (2nd)
     asmdg_disklist: "" # LAISSER VIDE
     asmdg_dgname: 'DG_FRA'
@@ -58,14 +62,14 @@
   roles:
     - updateLinux
     - prereqOracle
-    - installGrid
-    - installGridPsu
-    - createAsmDg
-    - installRdbms
-    - installRdbmsPsu
-    - createListener
-    - createDatabase
-    - cleanInstallDir
+#    - installGrid
+#    - installGridPsu
+#    - createAsmDg
+#    - installRdbms
+#    - installRdbmsPsu
+#    - createListener
+#    - createDatabase
+#    - cleanInstallDir
 
 
 
