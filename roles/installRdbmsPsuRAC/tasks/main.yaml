@@ -16,7 +16,7 @@
   become_user: oracle
 
 - name: resync ntpdate
-  shell: "systemctl stop ntpd; ntpdate ntp1.svc.sigma.host; systemctl start ntpd"
+  shell: "systemctl stop ntpd; ntpdate ntp1.svc.toto.host; systemctl start ntpd"
 
 - name: patch conflict detection
   shell: "export ORACLE_HOME={{ oracle_home }}; $ORACLE_HOME/OPatch/opatchauto apply {{ patch_dir }}/{{ rdbms_psu_number }} -analyze -oh {{ oracle_home }}"
