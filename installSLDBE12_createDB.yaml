@@ -1,18 +1,18 @@
 ---
-- hosts: oraclelinux
+- hosts: oraclelinux12
   vars:
     # GLOBAL
     major_version: 11
     patch_dir: /u01/install
     proxy: http://proxy.svc.sigma.host:8080
-    opatch_patch: p6880880_112000_Linux-x86-64.zip
+    opatch_patch: p6880880_121010_Linux-x86-64.zip
     u01_size_gb: 20
     tmp_size_gb: 1.5
     # GRID
     grid_base: /u01/app/grid
-    grid_home: /u01/app/grid/product/11.2.0.4/dbhome_1
-    grid_zip_part1: grid_112040_Linux-x86-64_3of7.zip
-    grid_zip_part2: grid_112040_Linux-x86-64_3of7.zip
+    grid_home: /u01/app/grid/product/12.1.0.2/dbhome_1
+    grid_zip_part1: linuxamd64_12102_grid_1of2.zip
+    grid_zip_part2: linuxamd64_12102_grid_2of2.zip
     grid_dgname: 'DG_DATA'
     grid_asmdisk: [ { dev: '/dev/sdb1', asm: 'ASM_DATA_01' }, { dev: '/dev/sdc1', asm: 'ASM_DATA_02' } ]
     grid_disklist: "" # LAISSER VIDE
@@ -26,23 +26,23 @@
     asmdg_dgname: 'DG_FRA'
     asmdg_asmdisk: [ { dev: '/dev/sdd1', asm: 'ASM_FRA_01' }, { dev: '/dev/sde1', asm: 'ASM_FRA_02' } ]
     # GRID PSU
-    grid_psu: grid_112040.170418_Linux-x86-64.zip
-    grid_psu_number: 25476126
+    grid_psu: p24917825_121020_Linux-x86-64.zip
+    grid_psu_number: 24917825
     # RDBMS
     oracle_root: /u01/app
     oracle_base: /u01/app/oracle
-    oracle_home: /u01/app/oracle/product/11.2.0.4/dbhome_1
-    rdbms_zip_part1: rdbms_112040_Linux-x86-64_1of7.zip
-    rdbms_zip_part2: rdbms_112040_Linux-x86-64_2of7.zip
+    oracle_home: /u01/app/oracle/product/12.1.0.2/dbhome_1
+    rdbms_zip_part1: linuxamd64_12102_database_se2_1of2.zip
+    rdbms_zip_part2: linuxamd64_12102_database_se2_2of2.zip
     # RDBMS PSU
-    rdbms_psu: rdbms_11204.170418_Linux-x86-64.zip
-    rdbms_psu_number: 24732075
+    rdbms_psu: p24006101_121020_Linux-x86-64.zip
+    rdbms_psu_number: 24006101
     # LISTENER
     netca_lsnr_name: LISTENER
     netca_lsnr_port: 1521
     # DATABASE
-    dbca_gdbname: SIGDTRP
-    dbca_dbname: SIGDTRP
+    dbca_gdbname: SIGDMET
+    dbca_dbname: SIGDMET
     dbca_pwdsys: Password1
     dbca_pwdsystem: Password1
     dbca_charset: WE8ISO8859P15
@@ -53,8 +53,7 @@
     dbca_initparam_dbrecoverydest: /u01/app/oracle/fra/
     dbca_initparam_dbrecoverydestsize: 1024
     #dbca_initparam_oradata: /u01/app/oracle/oradata/
-    #dbca_initparam_oradata: '+DG_DATA'
-    dbca_initparam_oradata: 'DG_DATA'
+    dbca_initparam_oradata: '+DG_DATA'
     #dbca_initparam_redologdest1: /u01/app/oracle/fra/
     #dbca_initparam_redologdest2: /u01/app/oracle/oradata/
     dbca_initparam_redologdest1: '+DG_FRA'

@@ -11,10 +11,10 @@
   become: true
   become_user: grid
 
-#- name: unzip GRID installer (2/2)
-#  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
-#  become: true
-#  become_user: grid
+- name: unzip GRID installer (2/2)
+  unarchive: src={{ patch_dir }}/{{ grid_zip_part2 }} dest={{ patch_dir }} remote_src=yes
+  become: true
+  become_user: grid
 
 - name: concat disk
   set_fact:
@@ -66,9 +66,9 @@
 - name: execute orainstRoot.sh
   shell: "{{ oracle_root }}/oraInventory/orainstRoot.sh"
 
-- name: include oracle linux spec
+- name: include oracle linux spec v11
   include: oraclelinux.yaml
-  when: (ansible_distribution == "OracleLinux" and ansible_distribution_major_version == "7")
+  when: (ansible_distribution == "OracleLinux" and ansible_distribution_major_version == "7" and major_version == "11")
 
 - name: execute root.sh
   shell: "{{ grid_home }}/root.sh"

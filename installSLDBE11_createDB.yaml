@@ -41,8 +41,8 @@
     netca_lsnr_name: LISTENER
     netca_lsnr_port: 1521
     # DATABASE
-    dbca_gdbname: SIGDTRP
-    dbca_dbname: SIGDTRP
+    dbca_gdbname: SIGDMET
+    dbca_dbname: SIGDMET
     dbca_pwdsys: Password1
     dbca_pwdsystem: Password1
     dbca_charset: WE8ISO8859P15
